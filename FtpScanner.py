@@ -17,14 +17,15 @@ logger = set_logger('FtpScanner.py',LOG_FILE)
 
 
 class FtpScanner:
-	def __init__(self,timeout=5):
-		pass
-			
-	def connect(self,server,port=21):
+	def __init__(self,port=21,timeout=5):
+		self.port = port
+		self.timeout = timeout
+	
+	def connect(self,server):
 		try:
 			ftp = FTP()
 			ftp.set_debuglevel(DEBUG)
-			ftp.connect(server,port)
+			ftp.connect(server,port=self.port,timeout=self.timeout)
 			info = ftp.getwelcome()
 			ftp.quit()
 			return info
@@ -32,7 +33,7 @@ class FtpScanner:
 			if 'refused' in msg[1]:
 				info =  'FTP Close!'
 			else:
-				info = 'Other error:' + msg[1]
+				info = 'Error:' + msg[1]
 			return info
 
 
