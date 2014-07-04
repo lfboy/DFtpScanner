@@ -4,8 +4,17 @@
 from ftplib import FTP
 import socket
 import os
+import pymongo
+import ConfigParser
 
 DEBUG = 2
+config_file = os.getcwd() + '/config.ini'
+cf = ConfigParser.ConfigParser()
+cf.read(config_file)
+LOG_FILE = os.path.join(os.getcwd(),cf.get('support','log_path'))
+logger = set_logger('FtpScanner.py',LOG_FILE)
+
+
 
 class FtpScanner:
 	def __init__(self,timeout=5):
@@ -16,18 +25,16 @@ class FtpScanner:
 			ftp = FTP()
 			ftp.set_debuglevel(DEBUG)
 			ftp.connect(server,port)
-		
-			print ftp.getwelcome()
+			info = ftp.getwelcome()
 			ftp.quit()
+			return info
 		except socket.error,msg:
-			if "refused" in msg[1]:
-				print "FTP Close!"
+			if 'refused' in msg[1]:
+				info =  'FTP Close!'
 			else:
-				print "Other error:%s" % msg[1]
+				info = 'Other error:' + msg[1]
+			return info
 
-class DBOperator:
-	def __init__(self,server_ip,user_name,password,port=):
-		self.
 
 if __name__=="__main__":
 	scanner = FtpScanner()
