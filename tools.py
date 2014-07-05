@@ -39,6 +39,17 @@ def generate_ips(start_str,end_str):
 		ip_list.append(ip)
 	return ip_list
 
+def generate_ips2(start,end):
+	ip_list=[]
+	if start > end:
+		return ip_list
+	for i in range(start,end):
+		ip = long2ip(i)
+		ip_list.append(ip)
+	return ip_list
+
+
+
 if __name__=='__main__':
 	start = raw_input('Start:')
 	end = raw_input('End:')

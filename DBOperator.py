@@ -38,6 +38,11 @@ class DBOperator:
 		allocate_queue = (self.db).allocate_queue
 		#record = '{\"ip\":\"' + ip +'\",' + '\"client\":\"' + client + '\"}'
 		allocate_queue.insert({"_id":ip,"client":client})
+	
+	def insert_ips_to_allocate(self,ips,client):
+		allocate_queue = self.db.allocate_queue
+		for i in ips:
+			allocate_queue.insert({"_id":i,"client":client})
 
 	def remove_from_allocate_queue(self,ip):
 		allocate_queue = self.db.allocate_queue
@@ -49,11 +54,11 @@ class DBOperator:
 	
 	def clear_allocate_queue(self):
 		allocate_queue = self.db.allocate_queue
-		allocate_queue.drop()
+		allocate_queue.remove()
 
 	def clear_scanned_queue(self):
 		scanned_queue = self.db.scanned_queue
-		scanned_queue.drop()	
+		scanned_queue.remove()	
 	
 	def get_allocate_queue_record_amount(self):
 		allocate_queue = self.db.allocate_queue
@@ -65,10 +70,17 @@ class DBOperator:
 	
 	def reallocate_ips(self,src_client,to_client):
 		allocate_queue = self.db.allocate_queue
-		allocate_queue.update({'client':src_client},{'$set':{'client':to_client}})	
+		allocate_queue.update({'client':src_client},{'$set':{'client':to_client}},upsert=False,multi=True)	
 	
+	def get_client_ips(self,client):
+		allocate_queue = self.db.allocate_queue
+		allocate_queue.find({'client':client},multi=True)	
 if __name__=="__main__":
 	test = DBOperator()
-	test.insert_to_allocate_queue('127.0.0.2','client2')
+#	test.insert_to_allocate_queue('127.0.0.1','client1')
+#	test.reallocate_ip('127.0.0.1','client2')
+#	test.reallocate_ips('client2','client1')
+#	print test.get_allocate_queue_record_amount()
+#	test.clear_allocate_queue()
 
 	
