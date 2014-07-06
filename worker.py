@@ -23,7 +23,8 @@ LOG_FILE = os.path.join(os.getcwd(),cf.get('support','client_log'))
 logger = tools.set_logger('worker.py',LOG_FILE)
 
 def worker():
-	global ip_list[]
+	global ip_list
+	global result_map
 	global local_ip
 	local_ip = socket.gethostbyname(socket.gethostname())
 	conn = myconnect(SERVER_ADDR,SERVER_PORT)
@@ -48,17 +49,29 @@ def worker():
 		user_thread.start()
 		
 		#Scan thread	
-		ip_list = get_my_ips()
+		scan_thread = threading.Thread(target = scan, name = 'Scan thread')
+		scan_thread.setDaemon(1)
+		scan_thread.start()
 
 		user_thread.join()
+		scan_thread.join()
 		#uncompleted						
 	else:
 		logger.error('Server reply a error.')
 		exit()
 
 def scan():
-	
-	
+	while True:
+		ip_list.clear()
+		result_map.clear()
+		ip_list = get_my_ips()	
+		scanner = FtpScanner()
+		scanner.set_ip_list(ip_list)
+		result_map = scanner.batch_scan()
+		for i in result_map:
+			db = DBOperator()
+			db.insert_to_scanned_queue()		
+			
 #There are some problems
 def user_inter():
 	instruction = raw_input()
