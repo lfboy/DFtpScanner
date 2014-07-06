@@ -73,8 +73,13 @@ class DBOperator:
 		allocate_queue.update({'client':src_client},{'$set':{'client':to_client}},upsert=False,multi=True)	
 	
 	def get_client_ips(self,client):
+		ip_list = []
 		allocate_queue = self.db.allocate_queue
-		allocate_queue.find({'client':client},multi=True)	
+		for item in allocate_queue.find({'client':client}):
+			ip_list.append(item['_id'])
+		return ip_list	
+			
+
 if __name__=="__main__":
 	test = DBOperator()
 #	test.insert_to_allocate_queue('127.0.0.1','client1')

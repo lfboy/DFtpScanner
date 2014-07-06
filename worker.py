@@ -9,12 +9,16 @@ import thread
 import datetime
 import string
 from DBOperator import DBOperator
+from FtpScanner import FtpScanner
 
 config_file = os.getcwd() + '/config.ini'
 cf = ConfigParser.ConfigParser()
 cf.read(config_file)
 SERVER_ADDR = cf.get('client','server_addr')
 SERVER_PORT = int(cf.get('client','server_port'),10)
+IP_STEP = int(cf.get('client','step'),10)
+TIMEOUT = int(cf.get('client','timeout'),10)
+INTERVAL = int(cf.get('client','interval'),10)
 LOG_FILE = os.path.join(os.getcwd(),cf.get('support','client_log'))
 logger = tools.set_logger('worker.py',LOG_FILE)
 
@@ -22,11 +26,7 @@ def worker():
 	global ip_list[]
 	global local_ip
 	local_ip = socket.gethostbyname(socket.gethostname())
-	s = socket.socket()
-	s.connect(SERVER_ADDR,SERVER_PORT)
-	s.setblocking(0)
-	global conn
-	conn = s
+	conn = myconnect(SERVER_ADDR,SERVER_PORT)
 	regis = {'cmd':'add_client','client':local_ip}
 	try:
 		my_send(regis)
@@ -36,20 +36,70 @@ def worker():
 		while len(res) < length:
 			res = res + conn.recv(4096)
 		data = json.loads(res)
+		mydisconnect(conn)
 	except Exception,e:
 		logger.error('Register to server error.')
 		exit()
 	res = parse(data)
 	if res == 'success':
 	#register successfully
+		user_thread = threading.Thread(target = user_inter, name = 'User inter')
+		user_thread.setDaemon(1)
+		user_thread.start()
 		
+		#Scan thread	
+		ip_list = get_my_ips()
+
+		user_thread.join()
+		#uncompleted						
 	else:
 		logger.error('Server reply a error.')
 		exit()
 
+def scan():
+	
+	
+#There are some problems
+def user_inter():
+	instruction = raw_input()
+	if instruction == 'quit()':
+		unregis = {'cmd':'del_client','client':local_ip}
+		conn = myconnect(SERVER_ADDR,SERVER_PORT)
+		try:
+			my_send(regis)
+			a = conn.recv(10)
+			length = string.atoi(a)
+			res = b''
+			while len(res) < length:
+				res = res + conn.recv(4096)
+			data = json.loads(res)
+			mydisconnect(conn)
+		except Exception,e:
+			logger.error('Unregister to server error.')
+			exit()
+		res = parse(data)
+		if res == 'success':
+			logger.info('Server reply the close info.')
+		else:
+			logger.error('Server reply a error.')
+		
+		logger.info('Close.')
+		exit()
+
+
+def myconnect(server_ip,port):
+	s = socket.socket()
+	s.connect(server_ip,port)
+	s.setblocking(0)
+	return s
+
+def mydisconnect(s):
+	s.close()
+
 def get_my_ips():
-	ip_list=[]
-	db = DBOperator()	
+	db = DBOperator()
+	ip_list_tmp = db.get_client_ips(local_ip)
+	return ip_list_tmp		
 
 def my_send(data):
 	i = 0
