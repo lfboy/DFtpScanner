@@ -58,7 +58,7 @@ class FtpScanner:
 		lgger.debug(self.result_map)
 		return self.result_map
 
-	def scan(self,server):
+	def scan2(self,server):
 		try:
 			ftp = FTP()
 			ftp.set_debuglevel(DEBUG)
