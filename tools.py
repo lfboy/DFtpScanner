@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import logging
 import socket,struct
+import fcntl
 
 def set_logger(program,log_file):
 	logger = logging.getLogger(program)
@@ -48,7 +49,9 @@ def generate_ips2(start,end):
 		ip_list.append(ip)
 	return ip_list
 
-
+def get_local_ip(ifname):
+	s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+	return socket.inet_ntoa(fcntl.ioctl(s.fileno(),0x8915,struct.pack('256s',ifname[:15]))[20:24])
 
 if __name__=='__main__':
 	start = raw_input('Start:')

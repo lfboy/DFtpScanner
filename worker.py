@@ -8,6 +8,8 @@ import threading
 import thread
 import datetime
 import string
+import traceback
+import time
 from DBOperator import DBOperator
 from FtpScanner import FtpScanner
 
@@ -26,19 +28,23 @@ def worker():
 	global ip_list
 	global result_map
 	global local_ip
-	local_ip = socket.gethostbyname(socket.gethostname())
+	local_ip = tools.get_local_ip('eth0')
+#	print local_ip,SERVER_ADDR,SERVER_PORT
+
 	conn = myconnect(SERVER_ADDR,SERVER_PORT)
-	regis = {'cmd':'add_client','client':local_ip}
+	time.sleep(5)
+	tmp = {}
+	tmp['cmd'] = 'add_client'
+	tmp['client'] = local_ip
+	regis = pack_data(tmp)
 	try:
-		my_send(regis)
-		a = conn.recv(10)
-		length = string.atoi(a)
+		my_send(conn,regis)
 		res = b''
-		while len(res) < length:
-			res = res + conn.recv(4096)
+		res = res + conn.recv(4096)
 		data = json.loads(res)
 		mydisconnect(conn)
 	except Exception,e:
+		traceback.print_exc()
 		logger.error('Register to server error.')
 		exit()
 	res = parse(data)
@@ -47,11 +53,13 @@ def worker():
 		user_thread = threading.Thread(target = user_inter, name = 'User inter')
 		user_thread.setDaemon(1)
 		user_thread.start()
+		logger.info('User inter thread started.')
 		
 		#Scan thread	
 		scan_thread = threading.Thread(target = scan, name = 'Scan thread')
 		scan_thread.setDaemon(1)
 		scan_thread.start()
+		logger.info('Scan thread started.')
 
 		user_thread.join()
 		scan_thread.join()
@@ -79,12 +87,9 @@ def user_inter():
 		unregis = {'cmd':'del_client','client':local_ip}
 		conn = myconnect(SERVER_ADDR,SERVER_PORT)
 		try:
-			my_send(regis)
-			a = conn.recv(10)
-			length = string.atoi(a)
+			my_send(conn,unregis)
 			res = b''
-			while len(res) < length:
-				res = res + conn.recv(4096)
+			res = res + conn.recv(4096)
 			data = json.loads(res)
 			mydisconnect(conn)
 		except Exception,e:
@@ -101,9 +106,12 @@ def user_inter():
 
 
 def myconnect(server_ip,port):
-	s = socket.socket()
-	s.connect(server_ip,port)
-	s.setblocking(0)
+	try:
+		s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+		s.connect((server_ip,port))
+	except socket.error,e:
+		traceback.print_exc()
+		logger.error('Connect to server error %s.' % (e))
 	return s
 
 def mydisconnect(s):
@@ -114,7 +122,7 @@ def get_my_ips():
 	ip_list_tmp = db.get_client_ips(local_ip)
 	return ip_list_tmp		
 
-def my_send(data):
+def my_send2(conn,data):
 	i = 0
 	length = len(data)*1.0
 	while True:
@@ -133,6 +141,9 @@ def my_send(data):
 				logger.error(e)
 				break
 	return 'error'
+
+def my_send(socket,data):
+		socket.send(data)
 
 def cusrecv(num):
 	for i in range(4):
@@ -153,8 +164,7 @@ def cusrecv(num):
 				break
 	return 'error'
 
-def my_recv():
-	a = cusrecv(10)
+def my_recv2():
 	if a == 'error':
 		return 'error'
 	length2 = string.atoi(a)
@@ -169,14 +179,17 @@ def my_recv():
 			exit()
 	return res 
 
+
+	
+
 def pack_data(data):
-	a = ['0']*10
+#	a = ['0']*10
 	data = json.dumps(data)
-	length3 = len(data)
-	length3 = str(length3)
-	for i in range(len(length3)):
-		a[10-i-1] = length3[len(length3)-i-1]
-	res = "".join(a)
+#	length3 = len(data)
+#	length3 = str(length3)
+#	for i in range(len(length3)):
+#		a[10-i-1] = length3[len(length3)-i-1]
+	res = ""
 	res = res + data
 	return res
 
@@ -189,4 +202,7 @@ def parse(data):
 	elif cmd == 'server_close':
 		return data['time']
 	return -1
-		
+
+
+if __name__=='__main__':
+	worker()		
