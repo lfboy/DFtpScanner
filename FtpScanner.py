@@ -45,17 +45,18 @@ class FtpScanner:
 			return info
 
 	def set_ip_list(self,ips):
-		self.ip_list.clear()
+		del self.ip_list[:]
 		self.ip_list = ips
 
 	def batch_scan(self):
-		self.result_map.clear()
+		self.result_map={}
 		for i in self.ip_list:
 			info = self.scan(i)		
 			time = time.strftime(ISOTIMEFORMAT, time.localtime(time.time()))
 			self.result_map[i] = {'info':info,'time':time}	
 		logger.debug('Result:')
-		lgger.debug(self.result_map)
+		logger.debug(self.result_map)
+
 		return self.result_map
 
 	def scan2(self,server):

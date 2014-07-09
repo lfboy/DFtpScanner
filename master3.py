@@ -60,7 +60,6 @@ def user_inter():
 			exit(0)
 
 def allocate():
-
 	ip_start = tools.ip2long(str_ip_start)
 	ip_end = tools.ip2long(str_ip_end)
 	i = 0
@@ -70,9 +69,10 @@ def allocate():
 	 
 	while ip_end - ip_start > IP_STEP:
 		records = DBOperator().get_allocate_queue_record_amount()
+		logger.debug('Records amount %d, client num %d.' % (records,client_num))
 		if records < client_num*IP_STEP*2 and client_num > 0:
 			#Insert allocate_queue
-			ip_list = tools.generate_ips2(ip_start,ip_start+IP_STEP+1)
+			ip_list = tools.generate_ips2(ip_start,ip_start+IP_STEP)
 			DBOperator().insert_ips_to_allocate(ip_list,client_list[i])
 			logger.info('%s - %s allocated to %s.'%(ip_list[0],ip_list[-1],client_list[i]))
 			i = (i+1) % client_num
@@ -123,8 +123,8 @@ def my_recv(socket2):
 	
 	res = parse(data)
 	if len(res) > 0:
-		status = res['result']
-		socket.send(pack_data[res])	
+#		status = res['result']
+		socket.send(pack_data(res))	
 
 def pack_data(data):
 	data = json.dumps(data)
@@ -154,7 +154,7 @@ def add_client(client):
 def del_client(client):
 	global client_num
 	client_list.remove(client)
-	client_num += 1
+	client_num -= 1
 
 if __name__=="__main__":
 	try:

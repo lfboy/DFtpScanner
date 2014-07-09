@@ -77,7 +77,8 @@ class DBOperator:
 		allocate_queue = self.db.allocate_queue
 		for item in allocate_queue.find({'client':client}):
 			ip_list.append(item['_id'])
-		return ip_list	
+		return ip_list
+	
 			
 
 if __name__=="__main__":

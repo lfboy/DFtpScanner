@@ -28,6 +28,9 @@ def worker():
 	global ip_list
 	global result_map
 	global local_ip
+
+	ip_list = []
+	result_map = dict()	
 	local_ip = tools.get_local_ip('eth0')
 #	print local_ip,SERVER_ADDR,SERVER_PORT
 
@@ -42,6 +45,7 @@ def worker():
 		res = b''
 		res = res + conn.recv(4096)
 		data = json.loads(res)
+		logger.debug('res:%s,data:%s' %(res,data))
 		mydisconnect(conn)
 	except Exception,e:
 		traceback.print_exc()
@@ -69,22 +73,27 @@ def worker():
 		exit()
 
 def scan():
+	global ip_list
+	global result_map
 	while True:
-		ip_list.clear()
-		result_map.clear()
+		ip_list = []
+		result_map = []
 		ip_list = get_my_ips()	
 		scanner = FtpScanner()
 		scanner.set_ip_list(ip_list)
 		result_map = scanner.batch_scan()
 		for i in result_map:
 			db = DBOperator()
-			db.insert_to_scanned_queue()		
+			db.insert_to_scanned_queue()	
 			
 #There are some problems
 def user_inter():
 	instruction = raw_input()
 	if instruction == 'quit()':
-		unregis = {'cmd':'del_client','client':local_ip}
+		tmp = {}
+		tmp['cmd'] = 'del_client'
+		tmp['client'] = local_ip
+		unregis = pack_data(tmp)
 		conn = myconnect(SERVER_ADDR,SERVER_PORT)
 		try:
 			my_send(conn,unregis)
