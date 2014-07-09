@@ -8,7 +8,9 @@ import pymongo
 import ConfigParser
 import time
 import threading
+#import thread
 import tools
+import traceback
 
 DEBUG = 2
 config_file = os.getcwd() + '/config.ini'
@@ -16,9 +18,11 @@ cf = ConfigParser.ConfigParser()
 cf.read(config_file)
 LOG_FILE = os.path.join(os.getcwd(),cf.get('support','log_path'))
 logger = tools.set_logger('FtpScanner.py',LOG_FILE)
+ISOTIMEFORMAT = '%Y-%m-%d %X'
+
 
 class FtpScanner:
-	def __init__(self,port=21,timeout=5,thread_num=20):
+	def __init__(self,port=21,timeout=5,thread_num=200):
 		self.port = port
 		self.timeout = timeout
 		self.thread_num = thread_num
@@ -38,10 +42,13 @@ class FtpScanner:
 		#	logger.info(info)
 			return info
 		except socket.error,msg:
-			if 'refused' in msg[1]:
-				info =  'FTP Close!'
-			else:
-				info = 'Error:' + msg[1]
+#			traceback.print_exc()
+#			logger.debug(msg)
+#			if 'refused' in msg[1]:
+#				info =  'FTP Close!'
+#			else:
+#				info = 'Error:' + msg[1]
+			info = 'FTP close.'
 			return info
 
 	def set_ip_list(self,ips):
@@ -52,15 +59,15 @@ class FtpScanner:
 		self.result_map={}
 		for i in self.ip_list:
 			info = self.scan(i)		
-			time = time.strftime(ISOTIMEFORMAT, time.localtime(time.time()))
-			self.result_map[i] = {'info':info,'time':time}	
-		logger.debug('Result:')
-		logger.debug(self.result_map)
+			str_time = time.strftime(ISOTIMEFORMAT, time.localtime(time.time()))
+			self.result_map[i] = {'info':info,'time':str_time}	
+#		logger.debug('Result:')
+#		logger.debug(self.result_map)
 
 		return self.result_map
 
 	def scan2(self,server):
-		time = time.strftime(ISOTIMEFORMAT, time.localtime(time.time()))
+		str_time = time.strftime(ISOTIMEFORMAT, time.localtime(time.time()))
 		try:
 			ftp = FTP()
 			ftp.set_debuglevel(DEBUG)
@@ -70,26 +77,28 @@ class FtpScanner:
 		#	logger.info(info)
 	#		return (info,time)
 		except socket.error,msg:
-			if 'refused' in msg[1]:
-				info =  'FTP Close!'
-			else:
-				info = 'Error:' + msg[1]
+	#		if 'refused' in msg[1]:
+	#			info =  'FTP Close!'
+	#		else:
+	#			info = 'Error:' + msg[1]
 	#		return (info,time)
+			info = 'down'
 
 		self.lock.acquire()
-		self.result_map[server] = {'info':info,'time':time}
+		self.result_map[server] = {'info':info,'time':str_time}
 		self.lock.release()
+#		logger.debug('ip:%s, info:%s, time:%s' %(server,info,str_time))
 		return
 		
 
 	def batch_scan2(self):
-		self.result_map.clear()
+		self.result_map = {}
 		for index in range(len(self.ip_list)):
 			if self.current_threads < self.thread_num:	
-				t = thread.Threading(target=self.scan2,name='scan sub thread')
+				t = threading.Thread(target=self.scan2, args=(self.ip_list[index],))
 				t.setDaemon(1)
 				t.start()
-				t.join()
+	#			t.join()
 			else:
 				sleep(INTERVAL)
 				index = index - 1
@@ -98,7 +107,7 @@ class FtpScanner:
 		#	time = time.strftime(ISOTIMEFORMAT, time.localtime(time.time()))
 		#	self.result_map[i] = {'info':info,'time':time}	
 		logger.debug('Result:')
-		lgger.debug(self.result_map)
+		logger.debug(self.result_map)
 		return self.result_map
 
 if __name__=="__main__":

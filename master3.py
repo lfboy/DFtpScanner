@@ -85,7 +85,7 @@ def allocate():
 		records = DBOperator().get_allocate_queue_record_amount()
 		if records < client_num*IP_STEP*2 and client_num > 0:
 			#Insert allocate_queue
-			ip_list = generate_ips2(ip_start,ip_end+1)
+			ip_list = tools.generate_ips2(ip_start,ip_end+1)
 			insert_ips_to_allocate(ip_list,client_list[i])
 			logger.info('%s - %s allocated to %s.'%(ip_list[0],ip_list[-1],client_list[i]))
 			i = (i+1) % client_num

@@ -24,11 +24,11 @@ class DBOperator:
 			self.connection = pymongo.Connection(DB_ADDR,DB_PORT)
 			#Database
 			self.db = self.connection.ftp
-			logger.debug('Connected to ftp')
+#			logger.debug('Connected to ftp')
 			self.db.authenticate(READWRITE_USER,READWRITE_PASSWD)
-			logger.debug('Database authenticate success!')
+#			logger.debug('Database authenticate success!')
 		except:
-			print 'Database connect error!'
+#			print 'Database connect error!'
 			traceback.print_exc()
 			logger.error('Database connect error,exit.')
 			exit(0)

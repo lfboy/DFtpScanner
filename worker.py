@@ -81,10 +81,11 @@ def scan():
 		ip_list = get_my_ips()	
 		scanner = FtpScanner()
 		scanner.set_ip_list(ip_list)
-		result_map = scanner.batch_scan()
-		for i in result_map:
+		result_map = scanner.batch_scan2()
+		for k,v in result_map.iteritems():
 			db = DBOperator()
-			db.insert_to_scanned_queue()	
+			db.insert_to_scanned_queue(k,v['info'],v['time'],local_ip)
+			db.remove_from_allocate_queue(k)	
 			
 #There are some problems
 def user_inter():
