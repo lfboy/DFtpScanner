@@ -63,6 +63,10 @@ class DBOperator:
 	def get_allocate_queue_record_amount(self):
 		allocate_queue = self.db.allocate_queue
 		return allocate_queue.find().count()
+	
+	def get_client_allocated_amount(self,client):
+		allocate_queue = self.db.allocate_queue
+		return allocate_queue.find({'client':client}).count()
 
 	def reallocate_ip(self,ip,to_client):
 		allocate_queue = self.db.allocate_queue

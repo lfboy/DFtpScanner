@@ -32,8 +32,8 @@ def master():
 	str_ip_end = sys.argv[2]
 	global client_list 
 	client_list = []
-	global client_num 
-	client_num = 0
+#	global client_num 
+#	client_num = 0
 	global start_time
 	start_time = tools.get_current_time()
 	global end_time
@@ -66,6 +66,7 @@ def user_inter():
 def allocate():
 	ip_start = tools.ip2long(str_ip_start)
 	ip_end = tools.ip2long(str_ip_end)
+#	client_num = len(client_list)
 	i = 0
 	if ip_start > ip_end:
 		logger.error('Invalid ip range.')
@@ -73,9 +74,13 @@ def allocate():
 	hosts = ip_end - ip_start + 1	 
 
 	while ip_end - ip_start > IP_STEP:
-		records = DBOperator().get_allocate_queue_record_amount()
+		client_num = len(client_list)
+		if client_num <= 0:
+			time.sleep(INTERVAL)
+			continue		
+		records = DBOperator().get_client_allocated_amount(client_list[i])
 		logger.debug('Records amount %d, client num %d.' % (records,client_num))
-		if records < client_num*IP_STEP*2 and client_num > 0:
+		if records < IP_STEP*2:
 			#Insert allocate_queue
 			ip_list = tools.generate_ips2(ip_start,ip_start+IP_STEP)
 			DBOperator().insert_ips_to_allocate(ip_list,client_list[i])
@@ -84,6 +89,7 @@ def allocate():
 			ip_start += IP_STEP
 		else:
 		   time.sleep(INTERVAL)	
+		   i = (i+1)%client_num
 		   continue
 	
 	while ip_end - ip_start > 0:
@@ -154,14 +160,10 @@ def parse(data):
 	return result
 
 def add_client(client):
-	global client_num
 	client_list.append(client)
-	client_num += 1
 
 def del_client(client):
-	global client_num
 	client_list.remove(client)
-	client_num -= 1
 
 if __name__=="__main__":
 	try:
