@@ -35,7 +35,7 @@ def worker():
 #	print local_ip,SERVER_ADDR,SERVER_PORT
 
 	conn = myconnect(SERVER_ADDR,SERVER_PORT)
-	time.sleep(5)
+	time.sleep(2)
 	tmp = {}
 	tmp['cmd'] = 'add_client'
 	tmp['client'] = local_ip
@@ -79,14 +79,20 @@ def scan():
 		ip_list = []
 		result_map = []
 		ip_list = get_my_ips()	
+		if len(ip_list) == 0:
+			continue
 		scanner = FtpScanner()
 		scanner.set_ip_list(ip_list)
 		result_map = scanner.batch_scan2()
 		for k,v in result_map.iteritems():
 			db = DBOperator()
 			db.insert_to_scanned_queue(k,v['info'],v['time'],local_ip)
-			db.remove_from_allocate_queue(k)	
-			
+		#	db.remove_from_allocate_queue(k)	
+		for k in result_map.keys():
+			db.remove_from_allocate_queue(k)
+		#	logger.debug('remove from allocate_queue:%s' %(k))
+		logger.info('Finished one loop scan.')
+
 #There are some problems
 def user_inter():
 	instruction = raw_input()

@@ -2,6 +2,7 @@
 import logging
 import socket,struct
 import fcntl
+import time
 
 def set_logger(program,log_file):
 	logger = logging.getLogger(program)
@@ -52,6 +53,11 @@ def generate_ips2(start,end):
 def get_local_ip(ifname):
 	s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 	return socket.inet_ntoa(fcntl.ioctl(s.fileno(),0x8915,struct.pack('256s',ifname[:15]))[20:24])
+
+def get_current_time():
+	ISOTIMEFORMAT = '%Y-%m-%d %X'
+	str_time = time.strftime(ISOTIMEFORMAT, time.localtime(time.time()))
+	return str_time	
 
 if __name__=='__main__':
 	start = raw_input('Start:')

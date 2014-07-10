@@ -34,7 +34,11 @@ def master():
 	client_list = []
 	global client_num 
 	client_num = 0
-	
+	global start_time
+	start_time = tools.get_current_time()
+	global end_time
+		
+
 	global t1 
 	t1 = threading.Thread(target = serv, name = 'serv thread')
 	t1.setDaemon(1)
@@ -66,7 +70,8 @@ def allocate():
 	if ip_start > ip_end:
 		logger.error('Invalid ip range.')
 		return
-	 
+	hosts = ip_end - ip_start + 1	 
+
 	while ip_end - ip_start > IP_STEP:
 		records = DBOperator().get_allocate_queue_record_amount()
 		logger.debug('Records amount %d, client num %d.' % (records,client_num))
@@ -86,13 +91,15 @@ def allocate():
 		if records < client_num*IP_STEP*2 and client_num > 0:
 			#Insert allocate_queue
 			ip_list = tools.generate_ips2(ip_start,ip_end+1)
-			insert_ips_to_allocate(ip_list,client_list[i])
+			DBOperator().insert_ips_to_allocate(ip_list,client_list[i])
 			logger.info('%s - %s allocated to %s.'%(ip_list[0],ip_list[-1],client_list[i]))
 			i = (i+1) % client_num
 			ip_start = ip_end
 		else:
 		   time.sleep(INTERVAL)	
 		   continue
+	end_time = tools.get_current_time()
+	print 'Time:%s , %s, Hosts: %d' %(start_time,end_time,hosts)	
 
 def serv():
 	s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)

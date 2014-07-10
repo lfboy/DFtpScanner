@@ -46,7 +46,7 @@ class DBOperator:
 
 	def remove_from_allocate_queue(self,ip):
 		allocate_queue = self.db.allocate_queue
-		allocate_queue.remove({"_id:":ip})
+		allocate_queue.remove({"_id":ip})
 	
 	def insert_to_scanned_queue(self,ip,info,time,client):
 		scanned_queue = self.db.scanned_queue
@@ -88,5 +88,5 @@ if __name__=="__main__":
 #	test.reallocate_ips('client2','client1')
 #	print test.get_allocate_queue_record_amount()
 #	test.clear_allocate_queue()
-
+	test.remove_from_allocate_queue('192.168.128.99')
 	
